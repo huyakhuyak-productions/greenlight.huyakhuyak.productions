@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Editorial-brutalist palette — security checkpoint meets terminal */
+  --color-ink: #0a0908;
+  --color-ink-2: #14110f;
+  --color-bone: #f2ebe0;
+  --color-bone-2: #d8d0c2;
+  --color-poison: #a6ff00;
+  --color-poison-2: #84cc00;
+  --color-amber: #ffb800;
+  --color-amber-2: #cc9300;
+  --color-blood: #e63946;
+  --color-blood-2: #b82c37;
+  --color-graphite: #2a2724;
+  --color-paper: #1a1714;
+
+  /* Distinctive type — display = Instrument Serif italic, mono = Fragment Mono */
+  --font-display: 'Instrument Serif', 'Times New Roman', serif;
+  --font-mono: 'Fragment Mono', 'Courier New', monospace;
+  --font-sans: 'Fragment Mono', 'Courier New', monospace;
+
+  /* Editorial scale — verdict word is the centerpiece */
+  --text-display-sm: 4rem;
+  --text-display-md: 8rem;
+  --text-display-lg: 14rem;
+  --text-display-xl: 22rem;
+
+  /* Animation timing — choreographed, not wishy-washy */
+  --ease-erupt: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-checkpoint: cubic-bezier(0.83, 0, 0.17, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-ink);
+    color: var(--color-bone);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font-mono);
+    font-feature-settings: 'liga' 0, 'calt' 0;
+    overscroll-behavior: none;
+  }
+
+  ::selection {
+    background: var(--color-poison);
+    color: var(--color-ink);
+  }
+
+  textarea,
+  input {
+    background: transparent;
+  }
+
+  textarea:focus,
+  input:focus {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  /* Grain overlay — SVG fractal noise blended at low opacity for atmosphere */
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.18;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 180px 180px;
+  }
+
+  /* Animated CRT scanlines */
+  .scanlines {
+    position: relative;
+  }
+  .scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 3px,
+      rgba(255, 255, 255, 0.025) 3px,
+      rgba(255, 255, 255, 0.025) 4px
+    );
+    animation: scan-drift 8s linear infinite;
+  }
+  @keyframes scan-drift {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(4px);
+    }
+  }
+
+  .cursor-block::after {
+    content: '▊';
+    color: var(--color-poison);
+    margin-left: 2px;
+    animation: cursor-blink 1.06s steps(1) infinite;
+  }
+  @keyframes cursor-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .barcode {
+    background-image: repeating-linear-gradient(
+      to right,
+      currentColor 0,
+      currentColor 1px,
+      transparent 1px,
+      transparent 3px,
+      currentColor 3px,
+      currentColor 5px,
+      transparent 5px,
+      transparent 6px,
+      currentColor 6px,
+      currentColor 7px,
+      transparent 7px,
+      transparent 11px
+    );
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

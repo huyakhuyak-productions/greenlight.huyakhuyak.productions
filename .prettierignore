@@ -1,0 +1,8 @@
+dist
+node_modules
+bun.lockb
+bun.lock
+coverage
+*.min.*
+public/icons.svg
+public/favicon.svg
