@@ -8,6 +8,9 @@ import { exfiltrationRule } from './exfiltration';
 import { credentialsRule } from './credentials';
 import { commandSafetyRule } from './command-safety';
 import { steganographyRule } from './steganography';
+import { environmentRule } from './environment';
+import { ecosystemRule } from './ecosystem';
+import { configInjectionRule } from './config-injection';
 
 export const ALL_RULES: ReadonlyArray<Rule> = [
   pipeToShellRule,
@@ -19,4 +22,7 @@ export const ALL_RULES: ReadonlyArray<Rule> = [
   credentialsRule,
   commandSafetyRule,
   steganographyRule,
+  environmentRule,
+  ecosystemRule,
+  configInjectionRule,
 ];
