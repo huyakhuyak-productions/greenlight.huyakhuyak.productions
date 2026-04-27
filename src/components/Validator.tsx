@@ -6,13 +6,43 @@ import { VerdictWord } from './VerdictWord';
 import { FindingCard } from './FindingCard';
 import type { Severity } from '../engine';
 
-const FLOOD: Record<Severity, { bg: string; fg: string; meta: string; rule: string }> = {
-  allow: { bg: '#a6ff00', fg: '#0a0908', meta: '#0a0908', rule: '#0a0908' },
-  warn: { bg: '#ffb800', fg: '#0a0908', meta: '#0a0908', rule: '#0a0908' },
-  block: { bg: '#e63946', fg: '#f2ebe0', meta: '#f2ebe0', rule: '#f2ebe0' },
+// Flood palette — dark editorial base with a faint hue, plus an accent color
+// reserved for the verdict word. The intent is that the green/amber/red signal
+// reads through the WORD, not by drowning the viewport in saturation.
+const FLOOD: Record<
+  Severity,
+  { bg: string; fg: string; meta: string; rule: string; word: string }
+> = {
+  allow: {
+    bg: '#0c1410',
+    fg: '#e6e8e0',
+    meta: '#8e9a8a',
+    rule: '#1c241e',
+    word: '#9ee07c',
+  },
+  warn: {
+    bg: '#14110a',
+    fg: '#ebe5d4',
+    meta: '#a39880',
+    rule: '#231e14',
+    word: '#e8b455',
+  },
+  block: {
+    bg: '#140c0d',
+    fg: '#ebd9d4',
+    meta: '#a18b86',
+    rule: '#231518',
+    word: '#d65c5c',
+  },
 };
 
-const NEUTRAL = { bg: '#0a0908', fg: '#f2ebe0', meta: '#d8d0c2', rule: '#2a2724' };
+const NEUTRAL = {
+  bg: '#0a0908',
+  fg: '#f2ebe0',
+  meta: '#d8d0c2',
+  rule: '#2a2724',
+  word: '#f2ebe0',
+};
 
 const VERDICT_LABEL: Record<Severity, string> = {
   allow: 'PROCEED',
@@ -57,6 +87,7 @@ export function Validator() {
       '--flood-fg': NEUTRAL.fg,
       '--flood-meta': NEUTRAL.meta,
       '--flood-rule': NEUTRAL.rule,
+      '--flood-word': NEUTRAL.word,
     });
   }, []);
 
@@ -95,6 +126,7 @@ export function Validator() {
       '--flood-fg': palette.fg,
       '--flood-meta': palette.meta,
       '--flood-rule': palette.rule,
+      '--flood-word': palette.word,
       duration: 0.45,
       ease: 'power2.inOut',
       overwrite: 'auto',
@@ -286,7 +318,7 @@ export function Validator() {
             verdict
           </div>
 
-          <div className="lg:-mr-2">
+          <div className="lg:-mr-2" style={{ color: 'var(--flood-word)' }}>
             <VerdictWord severity={verdict.severity} hasInput={hasInput} />
           </div>
 
