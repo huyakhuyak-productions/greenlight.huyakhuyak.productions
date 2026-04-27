@@ -61,7 +61,21 @@ export function VerdictWord({ severity, hasInput }: VerdictWordProps) {
         className="font-display italic leading-[0.85] text-balance"
         style={{ fontSize: 'clamp(4.5rem, 22vw, 22rem)' }}
       >
-        <span className="inline-flex overflow-hidden align-baseline">
+        {/* Padding extends the clip region past each glyph's advance box so
+            Instrument Serif's italic side-bearings — the `p` swash (bottom-
+            left), the `e` lean (top-right), the long descenders — don't get
+            cropped by `overflow-hidden`. The chars start at opacity 0 in the
+            GSAP slide-in, so the extra room can't reveal mid-animation. */}
+        <span
+          className="inline-flex overflow-hidden align-baseline"
+          style={{
+            paddingBottom: '0.55em',
+            paddingLeft: '0.18em',
+            paddingRight: '0.22em',
+            marginLeft: '-0.18em',
+            marginRight: '-0.22em',
+          }}
+        >
           {word.split('').map((char, i) => (
             <span
               key={`${word}-${i}-${char}`}

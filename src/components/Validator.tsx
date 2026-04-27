@@ -28,11 +28,11 @@ const FLOOD: Record<
     word: '#e8b455',
   },
   block: {
-    bg: '#140c0d',
+    bg: '#1a0d0e',
     fg: '#ebd9d4',
     meta: '#a18b86',
-    rule: '#231518',
-    word: '#d65c5c',
+    rule: '#2c181a',
+    word: '#dc3845',
   },
 };
 
