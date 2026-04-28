@@ -59,7 +59,7 @@ export function VerdictWord({ severity, hasInput }: VerdictWordProps) {
         ref={ref}
         aria-hidden="true"
         className="font-display italic leading-[0.85] text-balance"
-        style={{ fontSize: 'clamp(4.5rem, 22vw, 22rem)' }}
+        style={{ fontSize: 'clamp(4rem, 18vw, 18rem)' }}
       >
         {/* Padding extends the clip region past each glyph's advance box so
             Instrument Serif's italic side-bearings — the `p` swash (bottom-

@@ -225,7 +225,7 @@ export function Validator() {
       />
 
       {/* Main grid — input upper-left, verdict bottom-right (asymmetric, breaking the rule) */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 px-6 sm:px-10 lg:px-16 pt-10 lg:pt-14 pb-16 lg:pb-24">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 px-6 sm:px-10 lg:px-16 pt-10 lg:pt-14 pb-16 lg:pb-24">
         {/* Input column */}
         <div data-reveal className="lg:col-span-7 flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
