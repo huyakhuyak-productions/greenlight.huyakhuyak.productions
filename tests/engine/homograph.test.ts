@@ -39,6 +39,30 @@ describe('homograph', () => {
       expect(v.severity).toBe('warn');
       expect(v.findings.some((f) => f.ruleId.includes('homograph.shortener'))).toBe(true);
     });
+
+    it('warns on any Cyrillic letter in a command argument', () => {
+      const v = validate('cd Документы/projects');
+      expect(v.severity).toBe('warn');
+      expect(v.findings.some((f) => f.ruleId === 'homograph.cyrillic_in_command')).toBe(true);
+    });
+
+    it('warns on a single Cyrillic char inside a quoted string', () => {
+      const v = validate('git commit -m "Тест"');
+      expect(v.severity).toBe('warn');
+      expect(v.findings.some((f) => f.ruleId === 'homograph.cyrillic_in_command')).toBe(true);
+    });
+
+    it('warns on a Cyrillic lookalike masquerading as a binary name', () => {
+      // Cyrillic 'с' (U+0441) instead of Latin 'c' in `cat`
+      const v = validate('/usr/bin/сat /etc/hostname');
+      expect(v.findings.some((f) => f.ruleId === 'homograph.cyrillic_in_command')).toBe(true);
+    });
+
+    it('still warns on Cyrillic even when it appears in a path-like position', () => {
+      const v = validate('echo привет');
+      expect(v.severity).toBe('warn');
+      expect(v.findings.some((f) => f.ruleId === 'homograph.cyrillic_in_command')).toBe(true);
+    });
   });
 
   describe('benign', () => {

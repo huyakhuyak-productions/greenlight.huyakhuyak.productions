@@ -36,7 +36,7 @@ export const homographRule: Rule = {
   id: 'homograph',
   category: 'homograph',
   appliesTo: ['command', 'url'],
-  run(input) {
+  run(input, kind) {
     const findings: Finding[] = [];
 
     const urls = extractUrls(input);
@@ -96,6 +96,34 @@ export const homographRule: Rule = {
           evidence: url.host,
           span: [url.hostStart, url.hostEnd],
           remediation: 'Resolve the shortener (e.g. with `curl -sIL <url>`) before fetching any content from it.',
+        });
+      }
+    }
+
+    // Cyrillic-anywhere-in-command — broader net than the URL-host detection
+    // above. The URL pass only fires on mixed-script hosts (Latin + Cyrillic);
+    // a standalone Cyrillic letter elsewhere in the command (an argument, a
+    // path, a string literal) still warrants attention because Cyrillic
+    // letters are the canonical Latin-lookalike vector. Warn-level: legitimate
+    // pure-Cyrillic input does exist (filenames, git messages), but the bar
+    // for *any* Cyrillic in a shell snippet is low enough to want a nudge.
+    const CYRILLIC_RE = /\p{Script=Cyrillic}/u;
+    if (kind === 'command') {
+      const m = input.match(CYRILLIC_RE);
+      if (m && m.index != null) {
+        const ctxStart = Math.max(0, m.index - 8);
+        const ctxEnd = Math.min(input.length, m.index + m[0].length + 8);
+        findings.push({
+          ruleId: 'homograph.cyrillic_in_command',
+          category: 'homograph',
+          severity: 'warn',
+          title: 'Cyrillic character in shell command',
+          message:
+            'A Cyrillic codepoint is present in this command. Cyrillic letters often look identical to Latin (e.g. "с" U+0441 vs "c" U+0063) and are commonly used to smuggle a different host, path, or argument into what appears to be a familiar command.',
+          evidence: input.slice(ctxStart, ctxEnd),
+          span: [m.index, m.index + m[0].length],
+          remediation:
+            'Retype the command by hand from a trusted source. If the Cyrillic is intentional (e.g. a filename), confirm each non-ASCII character.',
         });
       }
     }
