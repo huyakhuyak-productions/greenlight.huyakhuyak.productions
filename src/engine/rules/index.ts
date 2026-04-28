@@ -11,6 +11,9 @@ import { steganographyRule } from './steganography';
 import { environmentRule } from './environment';
 import { ecosystemRule } from './ecosystem';
 import { configInjectionRule } from './config-injection';
+import { codeScanRule } from './code-scan';
+import { postCompromiseRule } from './post-compromise';
+import { pathAnalysisRule } from './path-analysis';
 
 export const ALL_RULES: ReadonlyArray<Rule> = [
   pipeToShellRule,
@@ -25,4 +28,7 @@ export const ALL_RULES: ReadonlyArray<Rule> = [
   environmentRule,
   ecosystemRule,
   configInjectionRule,
+  codeScanRule,
+  postCompromiseRule,
+  pathAnalysisRule,
 ];
