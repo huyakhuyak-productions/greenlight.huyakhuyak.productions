@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Fragment+Mono&amp;display=swap');
+      .mono { font-family: 'Fragment Mono', ui-monospace, monospace; }
+      .display { font-family: 'Instrument Serif', serif; font-style: italic; }
+    </style>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="630" fill="#0a0908" />
+
+  <!-- top eyebrow rule -->
+  <line x1="80" y1="70" x2="1120" y2="70" stroke="#2a2724" stroke-width="1" />
+
+  <!-- top-left mark + wordmark -->
+  <g transform="translate(80, 110)">
+    <path d="M 0 18 L 14 32 L 38 6" stroke="#a6ff00" stroke-width="5" fill="none" stroke-linecap="square" stroke-linejoin="miter" />
+    <text x="60" y="30" class="display" font-size="34" fill="#f2ebe0">greenlight</text>
+    <text x="218" y="30" class="mono" font-size="14" fill="#8e9a8a" letter-spacing="3">// 0.1</text>
+  </g>
+
+  <!-- top-right meta -->
+  <g transform="translate(1120, 110)" text-anchor="end">
+    <text class="mono" font-size="14" fill="#8e9a8a" letter-spacing="4">OFFLINE-FIRST · NOTHING LEAVES THE PAGE</text>
+    <text y="22" class="mono" font-size="11" fill="#6a655c" letter-spacing="3">v0.1 · 15 categories</text>
+  </g>
+
+  <!-- centerpiece headline -->
+  <g transform="translate(80, 360)">
+    <text class="display" font-size="160" fill="#f2ebe0">verify</text>
+    <text y="140" class="display" font-size="160" fill="#f2ebe0">before you paste</text>
+  </g>
+
+  <!-- bottom rule -->
+  <line x1="80" y1="560" x2="1120" y2="560" stroke="#2a2724" stroke-width="1" />
+
+  <!-- bottom row -->
+  <g transform="translate(80, 595)">
+    <text class="mono" font-size="13" fill="#8e9a8a" letter-spacing="3">PASTE → CLASSIFY → VERDICT</text>
+  </g>
+  <g transform="translate(1120, 595)" text-anchor="end">
+    <text class="mono" font-size="13" fill="#8e9a8a" letter-spacing="3">CHECKPOINT::GREENLIGHT</text>
+  </g>
+</svg>

@@ -71,6 +71,7 @@ export function Validator() {
   const { input, setInput, kindOverride, setKindOverride, verdict, isPending } = useValidator();
   const rootRef = useRef<HTMLDivElement>(null);
   const scanRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [copyState, setCopyState] = useState<CopyState>('idle');
 
   const hasInput = input.trim().length > 0;
@@ -135,6 +136,32 @@ export function Validator() {
       tween.kill();
     };
   }, [palette]);
+
+  // Paste-anywhere shortcut: when the user hits Cmd/Ctrl+V while focus is
+  // anywhere on the page (not in a form field), redirect the paste into the
+  // textarea. We intercept the native `paste` event, read the clipboard data
+  // synchronously off it (no permissions needed), and route the text in.
+  useEffect(() => {
+    function onPaste(event: ClipboardEvent) {
+      const target = event.target;
+      // Already typing in something editable — let the browser handle it.
+      if (
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLInputElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      const textarea = textareaRef.current;
+      const text = event.clipboardData?.getData('text');
+      if (!textarea || text === undefined) return;
+      event.preventDefault();
+      textarea.focus();
+      setInput(text);
+    }
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  }, [setInput]);
 
   // Scan-line sweep — fires on each meaningful input change.
   useEffect(() => {
@@ -254,6 +281,7 @@ export function Validator() {
               }}
             />
             <textarea
+              ref={textareaRef}
               spellCheck={false}
               autoCorrect="off"
               autoCapitalize="off"
