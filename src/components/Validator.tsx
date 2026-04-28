@@ -1,9 +1,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { ClipboardEvent } from 'react';
 import gsap from 'gsap';
 import { useValidator } from '../hooks/useValidator';
 import { KindToggle } from './KindToggle';
 import { VerdictWord } from './VerdictWord';
 import { FindingCard } from './FindingCard';
+import { normalizePaste } from '../lib/normalize';
 import type { Severity } from '../engine';
 
 // Flood palette — dark editorial base with a faint hue, plus an accent color
@@ -142,9 +144,10 @@ export function Validator() {
   // textarea. We intercept the native `paste` event, read the clipboard data
   // synchronously off it (no permissions needed), and route the text in.
   useEffect(() => {
-    function onPaste(event: ClipboardEvent) {
+    function onPaste(event: globalThis.ClipboardEvent) {
       const target = event.target;
-      // Already typing in something editable — let the browser handle it.
+      // Already typing in something editable — let the browser handle it
+      // (the textarea has its own onPaste that normalizes in-place).
       if (
         target instanceof HTMLTextAreaElement ||
         target instanceof HTMLInputElement ||
@@ -157,11 +160,31 @@ export function Validator() {
       if (!textarea || text === undefined) return;
       event.preventDefault();
       textarea.focus();
-      setInput(text);
+      setInput(normalizePaste(text));
     }
     document.addEventListener('paste', onPaste);
     return () => document.removeEventListener('paste', onPaste);
   }, [setInput]);
+
+  // Textarea paste — replace any selection with the normalized clipboard
+  // text and restore the cursor at the end of the inserted block. Trailing
+  // whitespace and runs of blank lines that web pages drop in get cleaned
+  // up before they reach the engine.
+  function handleTextareaPaste(event: ClipboardEvent<HTMLTextAreaElement>) {
+    const text = event.clipboardData.getData('text');
+    if (!text) return;
+    event.preventDefault();
+    const normalized = normalizePaste(text);
+    const ta = event.currentTarget;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const next = input.slice(0, start) + normalized + input.slice(end);
+    setInput(next);
+    requestAnimationFrame(() => {
+      const pos = start + normalized.length;
+      ta.setSelectionRange(pos, pos);
+    });
+  }
 
   // Scan-line sweep — fires on each meaningful input change.
   useEffect(() => {
@@ -287,6 +310,7 @@ export function Validator() {
               autoCapitalize="off"
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onPaste={handleTextareaPaste}
               placeholder="paste a shell command, URL, or config…"
               aria-label="Input to validate"
               className="block w-full min-h-[260px] p-6 font-mono text-base sm:text-lg leading-relaxed resize-y placeholder:opacity-40"
