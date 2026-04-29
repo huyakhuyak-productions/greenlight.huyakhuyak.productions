@@ -9,8 +9,20 @@ const INTERPRETER =
   '(?:bash|sh|zsh|fish|ksh|dash|ash|python\\d?|ruby|perl|node|deno|bun|php|powershell|pwsh|iex|Invoke-Expression)';
 const C_FLAG = '(?:-c|--command|-e|-r|-Command|/c)';
 
+// Privilege / scheduling wrappers that real-world install one-liners stack in
+// front of the interpreter on the right-hand side of a pipe. Without these,
+// `curl … | sudo -E bash` and `wget … | sudo sh /dev/stdin` (Mail-in-a-Box,
+// Calibre) slip past the FETCHER_PIPE_TO_SHELL pattern, which only knew how to
+// look for a bare interpreter token after `|`.
+const PRIVILEGE_WRAPPER = '(?:sudo|nohup|nice|env|time|exec|setsid|stdbuf)';
+// Zero or more wrappers, each optionally followed by short/long flags
+// (`sudo -E`, `nice -n 10`). Flags are matched lazily via `\\S+` so we can
+// admit `sudo --preserve-env=PATH bash`-style invocations too.
+const PRIVILEGE_WRAPPER_PREFIX =
+  `(?:${PRIVILEGE_WRAPPER}(?:\\s+(?:-\\S+|--\\S+))*\\s+)*`;
+
 const FETCHER_PIPE_TO_SHELL = new RegExp(
-  `\\b${FETCHER}\\b[^\\n|]*(?:\\|\\s*[^|\\n]*?)*\\|\\s*${INTERPRETER}\\b`,
+  `\\b${FETCHER}\\b[^\\n|]*(?:\\|\\s*[^|\\n]*?)*\\|\\s*${PRIVILEGE_WRAPPER_PREFIX}${INTERPRETER}\\b`,
   'i',
 );
 
