@@ -80,8 +80,24 @@ describe('homograph', () => {
       // Pure Cyrillic .рф domain — not mixed, just non-Latin.
       // We accept this isn't flagged; it's a real script, not a confusable.
       const v = validate('https://яндекс.рф/');
-      // Either allow or warn (TLD heuristic) is acceptable; we just ensure no block.
-      expect(v.severity).not.toBe('block');
+      expect(v.severity).toBe('allow');
+    });
+
+    it('does not double-flag a curl to a pure-Cyrillic URL', () => {
+      // The URL pass deliberately allows pure-Cyrillic hosts. The
+      // command-level Cyrillic pass should not undo that decision when the
+      // only Cyrillic codepoints are inside the URL host span.
+      const v = validate('curl https://яндекс.рф/path');
+      expect(v.severity).toBe('allow');
+      expect(v.findings.some((f) => f.ruleId === 'homograph.cyrillic_in_command')).toBe(false);
+    });
+
+    it('does not produce a redundant warn alongside a mixed-script URL block', () => {
+      // The mixed-script URL pass already produces a `block`. The command-
+      // level Cyrillic finding would be duplicate noise on the same span.
+      const v = validate('curl https://gооgle.com');
+      expect(v.severity).toBe('block');
+      expect(v.findings.some((f) => f.ruleId === 'homograph.cyrillic_in_command')).toBe(false);
     });
   });
 });

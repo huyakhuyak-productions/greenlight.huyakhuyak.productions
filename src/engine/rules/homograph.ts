@@ -107,10 +107,19 @@ export const homographRule: Rule = {
     // letters are the canonical Latin-lookalike vector. Warn-level: legitimate
     // pure-Cyrillic input does exist (filenames, git messages), but the bar
     // for *any* Cyrillic in a shell snippet is low enough to want a nudge.
-    const CYRILLIC_RE = /\p{Script=Cyrillic}/u;
+    //
+    // Skip codepoints that fall inside a URL host the URL pass already
+    // inspected — those are either already flagged as block (mixed-script)
+    // or deliberately allowed (pure Cyrillic, e.g. яндекс.рф). Either way,
+    // re-flagging them here is duplicate noise.
+    const CYRILLIC_RE = /\p{Script=Cyrillic}/gu;
     if (kind === 'command') {
-      const m = input.match(CYRILLIC_RE);
-      if (m && m.index != null) {
+      for (const m of input.matchAll(CYRILLIC_RE)) {
+        if (m.index == null) continue;
+        const insideUrlHost = urls.some(
+          (u) => m.index! >= u.hostStart && m.index! < u.hostEnd,
+        );
+        if (insideUrlHost) continue;
         const ctxStart = Math.max(0, m.index - 8);
         const ctxEnd = Math.min(input.length, m.index + m[0].length + 8);
         findings.push({
@@ -125,6 +134,7 @@ export const homographRule: Rule = {
           remediation:
             'Retype the command by hand from a trusted source. If the Cyrillic is intentional (e.g. a filename), confirm each non-ASCII character.',
         });
+        break;
       }
     }
 
