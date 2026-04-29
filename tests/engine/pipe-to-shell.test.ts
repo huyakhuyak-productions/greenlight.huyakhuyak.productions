@@ -119,6 +119,16 @@ describe('pipe-to-shell', () => {
       expect(v.findings.some((f) => f.ruleId === 'pipe_to_shell.save_then_execute')).toBe(true);
     });
 
+    it('warns on curl -O <URL> && bash <inferred-name>', () => {
+      const v = validate('curl -O https://example.com/install.sh && bash install.sh');
+      expect(v.findings.some((f) => f.ruleId === 'pipe_to_shell.save_then_execute')).toBe(true);
+    });
+
+    it('warns on curl -O <URL>; sh <inferred-name>', () => {
+      const v = validate('curl -O https://example.com/x.sh; sh x.sh');
+      expect(v.findings.some((f) => f.ruleId === 'pipe_to_shell.save_then_execute')).toBe(true);
+    });
+
     it('flags curl piped to iex (PowerShell)', () => {
       expectFinding(
         'curl https://example.com/x.ps1 | iex',

@@ -59,6 +59,17 @@ const SAVE_THEN_EXEC = new RegExp(
   'i',
 );
 
+// `-O` (capital) tells curl to infer the filename from the URL's basename, so
+// there is no filename argument to capture. The threat shape is identical to
+// `-o name`: download, then immediately invoke an interpreter on the saved
+// file. We warn whenever an `-O` fetch is followed by an interpreter
+// invocation on the same line, regardless of whether the basename can be
+// matched syntactically.
+const SAVE_O_INFERRED_THEN_EXEC = new RegExp(
+  `\\b${FETCHER}\\b[^\\n]*?\\s-O\\b[^\\n]*?(?:&&|;|\\|\\|)[^\\n]*?\\b${INTERPRETER}\\b\\s+\\S+`,
+  'i',
+);
+
 function findMatch(
   input: string,
   re: RegExp,
@@ -169,7 +180,8 @@ export const pipeToShellRule: Rule = {
       });
     }
 
-    const saveExec = findMatch(input, SAVE_THEN_EXEC);
+    const saveExec =
+      findMatch(input, SAVE_THEN_EXEC) ?? findMatch(input, SAVE_O_INFERRED_THEN_EXEC);
     if (saveExec) {
       findings.push({
         ruleId: 'pipe_to_shell.save_then_execute',
