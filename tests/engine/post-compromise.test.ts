@@ -134,4 +134,17 @@ describe('post-compromise', () => {
       expect(v.severity).toBe('allow');
     });
   });
+
+  describe('regex performance', () => {
+    it('completes in well under a second on long pipelines with many `cat ` substrings', () => {
+      // Pre-fix this input took ~1010 ms in CRED_FILE_READ alone. We assert
+      // a generous bound so flaky CI doesn't fail the test, but well below
+      // the human-visible threshold for "the validator froze".
+      const adversarial = 'curl https://example.com | ' + 'cat |'.repeat(8000) + ' more';
+      const start = performance.now();
+      validate(adversarial);
+      const elapsed = performance.now() - start;
+      expect(elapsed).toBeLessThan(150);
+    });
+  });
 });

@@ -12,15 +12,22 @@ const DOCKER_HOST_NS = /\bdocker\s+run\b[^\n]*\s--(?:pid|ipc|net|network)(?:=|\s
 
 // Process-memory dumping: extract secrets from the running address space of
 // another process. Almost never used outside debugging or post-exploitation.
-const PROC_MEM_READ = /\b(?:cat|dd|cp|head|tail|xxd|hexdump|strings)\s+[^\n]*\/proc\/\d+\/(?:mem|maps|environ)\b/;
+//
+// All three "command-on-sensitive-file" regexes bound their middle segment
+// to `[^\n;&|]*` — characters that don't cross a shell separator. The earlier
+// `[^\n]*` form was quadratic on long pipelines (each `cat ` substring is a
+// candidate start position; the greedy middle then scans to end-of-line and
+// backtracks looking for the file pattern). With shell-separator bounding,
+// each candidate match is O(local-segment) and total work is O(N).
+const PROC_MEM_READ = /\b(?:cat|dd|cp|head|tail|xxd|hexdump|strings)\s+[^\n;&|]*\/proc\/\d+\/(?:mem|maps|environ)\b/;
 const PROC_MEM_TOOLS = /\b(?:gcore|procdump|procmemdump|mimikatz|lsass\.dmp)\b/i;
 
 // Direct credential-file reads: the keys an attacker grabs first.
 const CRED_FILE_READ =
-  /\b(?:cat|head|tail|less|more|bat|xxd|cp|tar)\s+[^\n]*(?:~\/\.aws\/credentials|~\/\.aws\/config|~\/\.ssh\/id_[a-z0-9]+|~\/\.netrc|~\/\.docker\/config\.json|~\/\.kube\/config|\.pgpass|\.config\/gcloud\/[^\s]+\.json)\b/;
+  /\b(?:cat|head|tail|less|more|bat|xxd|cp|tar)\s+[^\n;&|]*(?:~\/\.aws\/credentials|~\/\.aws\/config|~\/\.ssh\/id_[a-z0-9]+|~\/\.netrc|~\/\.docker\/config\.json|~\/\.kube\/config|\.pgpass|\.config\/gcloud\/[^\s]+\.json)\b/;
 
 // /etc/shadow / getent shadow — root-only file with hashed passwords.
-const SHADOW_READ = /\b(?:cat|head|tail|less|more|bat|xxd|cp)\s+[^\n]*\/etc\/shadow\b/;
+const SHADOW_READ = /\b(?:cat|head|tail|less|more|bat|xxd|cp)\s+[^\n;&|]*\/etc\/shadow\b/;
 const GETENT_SHADOW = /\bgetent\s+shadow\b/;
 
 // Filesystem credential sweeps: find / grep across the entire filesystem
