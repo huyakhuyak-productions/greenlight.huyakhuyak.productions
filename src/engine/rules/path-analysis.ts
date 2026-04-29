@@ -1,14 +1,17 @@
 import type { Finding, Rule } from '../types';
 
-// Plain `..` traversal targeting OS-sensitive files. The lookahead bound
-// keeps `../package.json`-shaped relative-import strings from firing.
+// Plain `..` traversal targeting OS-sensitive files. The `{2,8}` upper bound
+// stops the JS engine from retrying ever-deeper traversal counts on
+// adversarial input (e.g. `'../'.repeat(8000) + 'XX'`). Eight levels of `..`
+// are already deeper than any legitimate relative-import path; the threat
+// signature is the *combination* with a sensitive target, not the depth.
 const TRAVERSAL_TO_SENSITIVE =
-  /(?:\.{2}\/){2,}(?:etc\/(?:passwd|shadow|hosts|sudoers|crontab|ssh\/[^\s]+)|root\/[^\s]*|proc\/[^\s]*|home\/[^/\s]+\/\.(?:ssh|aws|kube|netrc|gnupg)\/[^\s]*)/i;
+  /(?:\.{2}\/){2,8}(?:etc\/(?:passwd|shadow|hosts|sudoers|crontab|ssh\/[^\s]+)|root\/[^\s]*|proc\/[^\s]*|home\/[^/\s]+\/\.(?:ssh|aws|kube|netrc|gnupg)\/[^\s]*)/i;
 
 // Windows backslash variant — `..\..\windows\...` etc. Less common in
 // shell-paste contexts but still seen in zip/tar entries and CMD payloads.
 const TRAVERSAL_BACKSLASH_WINDOWS =
-  /(?:\.{2}\\){2,}(?:windows\\(?:system32|win\.ini)|users\\[^\\\s]+\\(?:\.ssh|appdata))/i;
+  /(?:\.{2}\\){2,8}(?:windows\\(?:system32|win\.ini)|users\\[^\\\s]+\\(?:\.ssh|appdata))/i;
 
 // URL-encoded `..` — `%2e%2e%2f` and `%2E%2E%5C`. Three or more occurrences
 // in a row is the normal "encoded traversal" shape; one is too noisy because

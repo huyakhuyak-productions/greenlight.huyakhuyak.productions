@@ -78,4 +78,17 @@ describe('path-analysis', () => {
       expect(v.severity).toBe('allow');
     });
   });
+
+  describe('regex performance', () => {
+    it('completes in well under a second on long traversal-shaped input that does not match', () => {
+      // Pre-fix this input took ~167 ms in TRAVERSAL_TO_SENSITIVE alone and
+      // grew superlinearly with the repeat count. Bounding the `..` repeat
+      // count at 8 makes the regex linear in input length.
+      const adversarial = '../'.repeat(2000) + 'XX';
+      const start = performance.now();
+      validate(adversarial);
+      const elapsed = performance.now() - start;
+      expect(elapsed).toBeLessThan(150);
+    });
+  });
 });
