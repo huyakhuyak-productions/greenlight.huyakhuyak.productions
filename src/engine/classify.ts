@@ -25,8 +25,22 @@ export function classify(input: string): Kind {
   const looksLikeJsonArray = trimmed.startsWith('[') && trimmed.endsWith(']');
   const hasConfigHint = CONFIG_HINTS.some((re) => re.test(trimmed));
 
+  // Multi-line + structural hints is the easy case.
   if (lineCount > 1 && (looksLikeJsonObject || looksLikeJsonArray || hasConfigHint)) {
     return 'config';
+  }
+
+  // Single-line JSON that parses successfully and contains an MCP-style
+  // `command`/`args` shape is just a minified config — `claude config` and
+  // most JSON editors emit it on one line. Without this branch the
+  // config-injection rule never fires on minified MCP configs.
+  if (lineCount === 1 && (looksLikeJsonObject || looksLikeJsonArray) && hasConfigHint) {
+    try {
+      JSON.parse(trimmed);
+      return 'config';
+    } catch {
+      // Not actually JSON — fall through to `command`.
+    }
   }
 
   return 'command';

@@ -65,6 +65,16 @@ describe('config-injection', () => {
       expect(v.findings.some((f) => f.ruleId === 'config-injection.args_shell_meta')).toBe(true);
     });
 
+    it('blocks a single-line minified MCP config with a shell metacharacter in args', () => {
+      // `claude config` and most JSON editors emit minified JSON on one line.
+      // The classifier must still recognise it as `config` so the rule fires.
+      const v = validate(
+        '{"mcpServers":{"x":{"command":"node","args":["script.js && rm -rf /"]}}}',
+      );
+      expect(v.severity).toBe('block');
+      expect(v.findings.some((f) => f.ruleId === 'config-injection.args_shell_meta')).toBe(true);
+    });
+
     it('does not flag sh -c "<cmd>" — shell syntax is the entry point\'s job', () => {
       const v = validate(`{
   "mcpServers": {
