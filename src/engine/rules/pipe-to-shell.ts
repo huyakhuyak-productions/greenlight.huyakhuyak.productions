@@ -77,8 +77,14 @@ const SAVE_THEN_EXEC = new RegExp(
 // file. We warn whenever an `-O` fetch is followed by an interpreter
 // invocation on the same line, regardless of whether the basename can be
 // matched syntactically.
+//
+// Real installers cluster short flags (`curl -OL`, `curl -fsSLO`,
+// `wget -nvO-`), so we match `O` anywhere inside a `-` flag cluster — not
+// just as a standalone `-O`. Case-insensitive via the `i` flag, so `-fsslo`
+// and `-O` are both caught. The trailing `\\b` keeps the cluster from
+// extending into the next token.
 const SAVE_O_INFERRED_THEN_EXEC = new RegExp(
-  `\\b${FETCHER}\\b[^\\n]*?\\s-O\\b[^\\n]*?(?:&&|;|\\|\\|)[^\\n]*?\\b${INTERPRETER}\\b\\s+\\S+`,
+  `\\b${FETCHER}\\b[^\\n]*?\\s-[a-zA-Z]*O[a-zA-Z]*\\b[^\\n]*?(?:&&|;|\\|\\|)[^\\n]*?\\b${INTERPRETER}\\b\\s+\\S+`,
   'i',
 );
 

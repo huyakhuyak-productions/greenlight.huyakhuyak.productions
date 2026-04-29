@@ -170,6 +170,16 @@ describe('pipe-to-shell', () => {
         'pipe_to_shell.fetch_to_interpreter',
       );
     });
+
+    it('warns on curl -OL <URL> && bash <inferred-name> (combined flag)', () => {
+      const v = validate('curl -OL https://bashhub.com/setup && bash setup');
+      expect(v.findings.some((f) => f.ruleId === 'pipe_to_shell.save_then_execute')).toBe(true);
+    });
+
+    it('warns on curl -fsSLO <URL>; sh <inferred-name> (combined flag with O)', () => {
+      const v = validate('curl -fsSLO https://example.com/x.sh; sh x.sh');
+      expect(v.findings.some((f) => f.ruleId === 'pipe_to_shell.save_then_execute')).toBe(true);
+    });
   });
 
   describe('benign', () => {
