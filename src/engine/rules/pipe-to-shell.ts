@@ -12,19 +12,92 @@ const C_FLAG = '(?:-c|--command|-e|-r|-Command|/c)';
 // Privilege / scheduling wrappers that real-world install one-liners stack in
 // front of the interpreter on the right-hand side of a pipe. Without these,
 // `curl … | sudo -E bash` and `wget … | sudo sh /dev/stdin` (Mail-in-a-Box,
-// Calibre) slip past the FETCHER_PIPE_TO_SHELL pattern, which only knew how to
-// look for a bare interpreter token after `|`.
+// Calibre) slip past the fetch-to-interpreter detector, which only knew how
+// to look for a bare interpreter token after `|`.
 const PRIVILEGE_WRAPPER = '(?:sudo|nohup|nice|env|time|exec|setsid|stdbuf)';
 // Zero or more wrappers, each optionally followed by short/long flags
-// (`sudo -E`, `nice -n 10`). Flags are matched lazily via `\\S+` so we can
-// admit `sudo --preserve-env=PATH bash`-style invocations too.
+// (`sudo -E`, `nice -n 10`).
 const PRIVILEGE_WRAPPER_PREFIX =
   `(?:${PRIVILEGE_WRAPPER}(?:\\s+(?:-\\S+|--\\S+))*\\s+)*`;
 
-const FETCHER_PIPE_TO_SHELL = new RegExp(
-  `\\b${FETCHER}\\b[^\\n|]*(?:\\|\\s*[^|\\n]*?)*\\|\\s*${PRIVILEGE_WRAPPER_PREFIX}${INTERPRETER}\\b`,
+// Anchored test for "this segment begins with an interpreter (with optional
+// privilege wrappers)". Used by the tokenized scanner below. Both quantifiers
+// here are linear: each backtrack just shrinks the wrapper count by one, so
+// the worst case is O(segment length).
+const FETCHER_TOKEN_RE = new RegExp(`\\b${FETCHER}\\b`, 'i');
+const INTERPRETER_AT_HEAD_RE = new RegExp(
+  `^\\s*${PRIVILEGE_WRAPPER_PREFIX}${INTERPRETER}\\b`,
   'i',
 );
+
+// The previous monolithic regex
+//   \b${FETCHER}\b[^\n|]*(?:\|\s*[^|\n]*?)*\|\s*${WRAPPER}*${INTERPRETER}\b
+// had nested `*` quantifiers — the outer `(?:\|…)*` group followed by a
+// trailing literal `\|` gave the engine many ways to redistribute pipes
+// between the two when the final INTERPRETER didn't match. Inputs like
+// `curl x | a | a | … | nope` froze for 5+ seconds (catastrophic
+// backtracking, capped only by JSC's regex execution limit).
+//
+// Splitting on `|` once and scanning segments is linear, easier to reason
+// about, and naturally excludes `||` (logical OR) — which the old regex
+// would occasionally false-match.
+function findFetchPipeToShell(
+  input: string,
+): { evidence: string; span: [number, number] } | null {
+  let lineOffset = 0;
+  for (const line of input.split('\n')) {
+    const m = scanLineForPipeToShell(line);
+    if (m) {
+      return {
+        evidence: input.slice(lineOffset + m.start, lineOffset + m.end),
+        span: [lineOffset + m.start, lineOffset + m.end],
+      };
+    }
+    lineOffset += line.length + 1; // +1 for the consumed newline
+  }
+  return null;
+}
+
+function scanLineForPipeToShell(
+  line: string,
+): { start: number; end: number } | null {
+  // Split the line on a single `|`. A `|` adjacent to another `|` is part of
+  // `||` (logical OR), not a pipe — skip it.
+  const segments: { text: string; start: number }[] = [];
+  let segStart = 0;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] !== '|') continue;
+    if (line[i - 1] === '|' || line[i + 1] === '|') continue;
+    segments.push({ text: line.slice(segStart, i), start: segStart });
+    segStart = i + 1;
+  }
+  segments.push({ text: line.slice(segStart), start: segStart });
+  if (segments.length < 2) return null;
+
+  // Find the first segment containing a fetcher. The fetcher cannot be in
+  // the last segment — there'd be nothing to pipe to.
+  let fetcherIdx = -1;
+  let fetcherStart = -1;
+  for (let i = 0; i < segments.length - 1; i++) {
+    const m = segments[i].text.match(FETCHER_TOKEN_RE);
+    if (m && m.index != null) {
+      fetcherIdx = i;
+      fetcherStart = segments[i].start + m.index;
+      break;
+    }
+  }
+  if (fetcherIdx < 0) return null;
+
+  // Find the first later segment that begins with an interpreter (after
+  // optional whitespace and privilege wrappers).
+  for (let j = fetcherIdx + 1; j < segments.length; j++) {
+    const m = segments[j].text.match(INTERPRETER_AT_HEAD_RE);
+    if (m) {
+      return { start: fetcherStart, end: segments[j].start + m[0].length };
+    }
+  }
+  return null;
+}
 
 const PROCESS_SUB = new RegExp(`\\b${INTERPRETER}\\b\\s*<\\(\\s*${FETCHER}\\b`, 'i');
 
@@ -107,7 +180,7 @@ export const pipeToShellRule: Rule = {
   run(input) {
     const findings: Finding[] = [];
 
-    const direct = findMatch(input, FETCHER_PIPE_TO_SHELL);
+    const direct = findFetchPipeToShell(input);
     if (direct) {
       findings.push({
         ruleId: 'pipe_to_shell.fetch_to_interpreter',

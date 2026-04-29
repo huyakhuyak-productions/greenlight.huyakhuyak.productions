@@ -233,4 +233,19 @@ describe('pipe-to-shell', () => {
       expect(v.severity).toBe('allow');
     });
   });
+
+  describe('regex performance', () => {
+    it('does not freeze on long pipelines whose final segment is not an interpreter', () => {
+      // Pre-rewrite this input took ~5s — the monolithic regex had nested
+      // `*` quantifiers that made the engine try every distribution of
+      // pipes between the inner group and the trailing `\\|` when the
+      // final INTERPRETER didn't match. Even at N=50 the rule hit JSC's
+      // regex execution cap. The tokenized scanner is linear.
+      const adversarial = 'curl x ' + '| a '.repeat(2000) + '| nope';
+      const start = performance.now();
+      validate(adversarial);
+      const elapsed = performance.now() - start;
+      expect(elapsed).toBeLessThan(150);
+    });
+  });
 });
