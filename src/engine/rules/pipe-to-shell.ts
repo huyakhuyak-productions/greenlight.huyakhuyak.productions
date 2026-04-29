@@ -2,8 +2,11 @@ import type { Finding, Rule } from '../types';
 
 const FETCHER =
   '(?:curl|wget|fetch|http|aria2c|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)';
+// `iex` and `Invoke-Expression` are PowerShell's eval-of-string. Functionally
+// they're the right-hand side of `curl … | iex` — same threat shape as
+// `curl … | bash`, just on Windows.
 const INTERPRETER =
-  '(?:bash|sh|zsh|fish|ksh|dash|ash|python\\d?|ruby|perl|node|deno|bun|php|powershell|pwsh)';
+  '(?:bash|sh|zsh|fish|ksh|dash|ash|python\\d?|ruby|perl|node|deno|bun|php|powershell|pwsh|iex|Invoke-Expression)';
 const C_FLAG = '(?:-c|--command|-e|-r|-Command|/c)';
 
 const FETCHER_PIPE_TO_SHELL = new RegExp(

