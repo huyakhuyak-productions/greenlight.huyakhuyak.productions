@@ -2,7 +2,15 @@ import type { Finding, Rule } from '../types';
 import { findConfusables, hasSuspiciousMixedScript, hostOf, scriptsIn } from '../../lib/unicode';
 import { isShortener } from '../../data/shorteners';
 
-const URL_RE = /[a-z][a-z0-9+\-.]*:\/\/[^\s)\]"'<>]+/gi;
+// The scheme is bounded at 32 characters — RFC-registered schemes are well
+// under that (`chrome-extension` is the longest commonly-seen one at 16
+// chars). Without the bound, long alphabetic input like a code paste with no
+// `://` triggers O(n²) backtracking: at every position the engine greedily
+// consumes to end of input via `[a-z0-9+\-.]*`, fails to find `:`, then
+// rewinds one character at a time while `matchAll` advances the global
+// cursor. The cap turns each candidate position into O(1) work, making the
+// scan linear.
+const URL_RE = /[a-z][a-z0-9+\-.]{0,32}:\/\/[^\s)\]"'<>]+/gi;
 
 interface UrlOccurrence {
   raw: string;

@@ -100,4 +100,18 @@ describe('homograph', () => {
       expect(v.findings.some((f) => f.ruleId === 'homograph.cyrillic_in_command')).toBe(false);
     });
   });
+
+  describe('regex performance', () => {
+    it('completes in well under a second on long alphabetic input with no scheme', () => {
+      // Pre-fix this input scaled O(n²) because `[a-z0-9+\\-.]*` consumed to
+      // end of input, then backtracked one char at a time looking for `:` —
+      // and `matchAll` repeated the work at every starting position. At
+      // 60k chars the scan took ~5.8s. The bounded scheme caps it at O(n).
+      const adversarial = 'a'.repeat(60000);
+      const start = performance.now();
+      validate(adversarial);
+      const elapsed = performance.now() - start;
+      expect(elapsed).toBeLessThan(150);
+    });
+  });
 });
