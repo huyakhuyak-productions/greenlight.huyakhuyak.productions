@@ -1,4 +1,7 @@
 import type { Finding } from '../engine';
+import type { DownstreamScan } from '../lib/downstream';
+import { extractFirstFetchedUrl } from '../lib/url';
+import { NestedScanPanel } from './NestedScanPanel';
 
 const SEVERITY_LABEL: Record<Finding['severity'], string> = {
   warn: 'CAUTION',
@@ -25,9 +28,20 @@ const CATEGORY_LABEL: Record<Finding['category'], string> = {
 
 interface FindingCardProps {
   finding: Finding;
+  downstream?: DownstreamScan;
+  onScanRequest?: (url: string) => void;
+  onManualPaste?: (url: string, body: string) => void;
 }
 
-export function FindingCard({ finding }: FindingCardProps) {
+export function FindingCard({ finding, downstream, onScanRequest, onManualPaste }: FindingCardProps) {
+  // The scan affordance only renders when (1) the parent passed a handler
+  // (the nested-recursion site deliberately omits it to enforce one-level
+  // recursion), (2) this is a pipe-to-shell finding, and (3) we can recover
+  // an http(s) URL from the evidence the rule emitted.
+  const fetchableUrl =
+    onScanRequest && finding.category === 'pipe-to-shell'
+      ? extractFirstFetchedUrl(finding.evidence ?? '')
+      : null;
   return (
     <article
       data-finding
@@ -92,6 +106,29 @@ export function FindingCard({ finding }: FindingCardProps) {
           <span className="uppercase tracking-[0.28em] mr-2">do this →</span>
           <span className="normal-case">{finding.remediation}</span>
         </p>
+      )}
+
+      {fetchableUrl && downstream === undefined && (
+        <button
+          type="button"
+          onClick={() => onScanRequest?.(fetchableUrl)}
+          className="mt-3 font-mono text-[10px] uppercase tracking-[0.32em] px-3 py-2 border"
+          style={{
+            color: 'var(--flood-fg)',
+            borderColor: 'color-mix(in srgb, var(--flood-fg) 60%, transparent)',
+            backgroundColor: 'color-mix(in srgb, var(--flood-fg) 6%, transparent)',
+          }}
+        >
+          <span aria-hidden="true">↳ </span>scan this script
+        </button>
+      )}
+
+      {downstream !== undefined && (
+        <NestedScanPanel
+          url={downstream.url}
+          downstream={downstream}
+          onManualPaste={onManualPaste}
+        />
       )}
 
       <footer

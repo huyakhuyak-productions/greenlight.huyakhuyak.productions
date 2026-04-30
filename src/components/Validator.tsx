@@ -6,6 +6,7 @@ import { KindToggle } from './KindToggle';
 import { VerdictWord } from './VerdictWord';
 import { FindingCard } from './FindingCard';
 import { normalizePaste } from '../lib/normalize';
+import { extractFirstFetchedUrl } from '../lib/url';
 import type { Severity } from '../engine';
 
 // Flood palette — dark editorial base with a faint hue, plus an accent color
@@ -70,7 +71,17 @@ function detailFor(severity: Severity, count: number, hasInput: boolean): string
 type CopyState = 'idle' | 'copied' | 'failed';
 
 export function Validator() {
-  const { input, setInput, kindOverride, setKindOverride, verdict, isPending } = useValidator();
+  const {
+    input,
+    setInput,
+    kindOverride,
+    setKindOverride,
+    verdict,
+    isPending,
+    downstreamScans,
+    scanDownstream,
+    pasteDownstreamBody,
+  } = useValidator();
   const rootRef = useRef<HTMLDivElement>(null);
   const scanRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -332,12 +343,22 @@ export function Validator() {
           {/* Findings column lives below input on small screens, also visible here for medium-priority */}
           {verdict.findings.length > 0 && (
             <div className="mt-2 space-y-3">
-              {verdict.findings.map((f, i) => (
-                <FindingCard
-                  key={`${f.ruleId}::${f.span?.[0] ?? ''}::${f.span?.[1] ?? ''}::${i}`}
-                  finding={f}
-                />
-              ))}
+              {verdict.findings.map((f, i) => {
+                const url =
+                  f.category === 'pipe-to-shell'
+                    ? extractFirstFetchedUrl(f.evidence ?? '')
+                    : null;
+                const downstream = url ? downstreamScans.get(url) : undefined;
+                return (
+                  <FindingCard
+                    key={`${f.ruleId}::${f.span?.[0] ?? ''}::${f.span?.[1] ?? ''}::${i}`}
+                    finding={f}
+                    downstream={downstream}
+                    onScanRequest={url ? () => scanDownstream(url) : undefined}
+                    onManualPaste={url ? (target, body) => pasteDownstreamBody(target, body) : undefined}
+                  />
+                );
+              })}
             </div>
           )}
 
