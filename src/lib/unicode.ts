@@ -137,13 +137,3 @@ export function findConfusables(
   return out;
 }
 
-/**
- * Extract the host portion of a URL string. Returns null if the input does
- * not look like a URL.
- */
-export function hostOf(input: string): { host: string; start: number; end: number } | null {
-  const m = input.match(/^[a-z][a-z0-9+\-.]*:\/\/([^/?#\s]+)/i);
-  if (!m || m.index == null) return null;
-  const schemeAndSlashes = m[0].length - m[1].length;
-  return { host: m[1], start: m.index + schemeAndSlashes, end: m.index + m[0].length };
-}

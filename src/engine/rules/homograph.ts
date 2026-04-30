@@ -1,44 +1,7 @@
 import type { Finding, Rule } from '../types';
-import { findConfusables, hasSuspiciousMixedScript, hostOf, scriptsIn } from '../../lib/unicode';
+import { findConfusables, hasSuspiciousMixedScript, scriptsIn } from '../../lib/unicode';
+import { extractUrls } from '../../lib/url';
 import { isShortener } from '../../data/shorteners';
-
-// The scheme is bounded at 32 characters — RFC-registered schemes are well
-// under that (`chrome-extension` is the longest commonly-seen one at 16
-// chars). Without the bound, long alphabetic input like a code paste with no
-// `://` triggers O(n²) backtracking: at every position the engine greedily
-// consumes to end of input via `[a-z0-9+\-.]*`, fails to find `:`, then
-// rewinds one character at a time while `matchAll` advances the global
-// cursor. The cap turns each candidate position into O(1) work, making the
-// scan linear.
-const URL_RE = /[a-z][a-z0-9+\-.]{0,32}:\/\/[^\s)\]"'<>]+/gi;
-
-interface UrlOccurrence {
-  raw: string;
-  start: number;
-  end: number;
-  host: string;
-  hostStart: number;
-  hostEnd: number;
-}
-
-function extractUrls(input: string): UrlOccurrence[] {
-  const out: UrlOccurrence[] = [];
-  for (const m of input.matchAll(URL_RE)) {
-    if (m.index == null) continue;
-    const raw = m[0];
-    const host = hostOf(raw);
-    if (!host) continue;
-    out.push({
-      raw,
-      start: m.index,
-      end: m.index + raw.length,
-      host: host.host,
-      hostStart: m.index + (host.start - 0),
-      hostEnd: m.index + (host.end - 0),
-    });
-  }
-  return out;
-}
 
 export const homographRule: Rule = {
   id: 'homograph',
