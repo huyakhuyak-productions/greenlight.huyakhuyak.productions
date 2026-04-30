@@ -65,3 +65,7 @@ The output is plain static files — point any host that serves a directory (Clo
 ## Credits
 
 The detection categories and many of the rule shapes are lifted directly from [tirith](https://github.com/sheeki03/tirith) by [@sheeki03](https://github.com/sheeki03). Greenlight reimplements the rules in TypeScript so they can run in a browser tab, but the threat taxonomy is theirs — go give them a star.
+
+## License
+
+[MIT](./LICENSE).
