@@ -193,7 +193,7 @@ export function EngineInternals() {
           className="font-mono text-sm sm:text-base leading-relaxed mt-8 max-w-[60ch]"
           style={{ color: 'var(--color-bone-2)' }}
         >
-          Greenlight is a static rules engine that runs entirely in your browser. Your paste never leaves the page — no telemetry, no API, no server. Scroll to watch the pipeline.
+          Greenlight is a static rules engine that runs entirely in your browser. Your paste stays on the page — no telemetry, no analytics, no server. The only thing that ever leaves the tab is an explicit click on <em>Scan this script</em>, which fetches the URL the snippet already names so we can run the same engine over its body. Scroll to watch the pipeline.
         </p>
       </div>
 
@@ -382,7 +382,7 @@ export function EngineInternals() {
             <div className="h-px" style={{ backgroundColor: 'var(--color-graphite)' }} />
             <div className="flex items-center justify-between">
               <span>network</span>
-              <span style={{ color: 'var(--color-bone)' }}>none</span>
+              <span style={{ color: 'var(--color-bone)' }}>click only</span>
             </div>
             <div className="h-px" style={{ backgroundColor: 'var(--color-graphite)' }} />
             <div className="flex items-center justify-between">

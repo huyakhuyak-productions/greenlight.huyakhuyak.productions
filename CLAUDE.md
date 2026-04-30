@@ -1,6 +1,6 @@
 # Greenlight — agent context
 
-A client-side web validator for shell commands, URLs, and config snippets. The whole detection engine runs in the browser; nothing the user pastes ever leaves the tab. Treat that as a load-bearing invariant — any change that introduces a network call from the engine breaks the privacy promise the README makes.
+A client-side web validator for shell commands, URLs, and config snippets. The detection engine runs entirely in the browser and is allowed exactly zero network calls — that's a load-bearing invariant. The UI layer is allowed one kind of network call: an explicit per-finding *Scan this script* click that fetches a `curl | sh` URL so we can re-run the engine over the script body. That click is the only thing that ever leaves the tab. No telemetry, no analytics, no remote rule updates, no implicit fetches.
 
 ## Architecture
 
@@ -52,7 +52,9 @@ If you find a ReDoS in one rule, the others probably have the same pattern. The 
 
 ## Privacy is a feature, not a default
 
-There is intentionally no telemetry, no error reporting, no analytics, no remote rule updates. If a future change wants to call out to anything — a threat-intel feed, a "suggest a rule" form, a usage metric — that's a product decision that needs an explicit user-visible toggle, not a silent network call.
+There is intentionally no telemetry, no error reporting, no analytics, no remote rule updates. The engine performs zero network I/O — that boundary is non-negotiable and tested by the absence of `fetch(`, `XMLHttpRequest`, etc. anywhere in `src/engine/` and `src/lib/`.
+
+The UI layer has exactly one allowed network call: the per-finding *Scan this script* click. It fetches a single user-pointed URL (the one already named in their paste), receives the body, and feeds it back into the same offline engine. No proxy, no third-party intermediary, no caching across pastes. If a future change wants to call out to anything else — threat-intel feed, "suggest a rule" form, usage metric, even error reporting — that's a product decision that needs an explicit user-visible toggle, not a silent network call.
 
 ## Out of scope (documented, don't build)
 

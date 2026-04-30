@@ -4,7 +4,7 @@ A web-based safety check for shell snippets you'd otherwise paste blindly into a
 
 Paste a command, URL, or config blob into the page. If it's safe, the page goes **green**. If anything is off, the page goes **red** and tells you what.
 
-The whole engine runs in your browser. **Nothing you paste ever leaves the tab** — no requests, no telemetry, no server.
+The whole engine runs in your browser. **Your paste stays in the tab** — no telemetry, no analytics, no server. The only network call the page ever makes is when you click *Scan this script* on a `curl … | bash` finding: your browser fetches that URL directly so we can run the same engine over the script body. The engine itself never phones home; the click is always your move.
 
 ## Why
 

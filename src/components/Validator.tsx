@@ -261,7 +261,7 @@ export function Validator() {
           </div>
         </div>
         <div className="hidden sm:flex flex-col items-end gap-1 font-mono text-[10px] uppercase tracking-[0.28em]">
-          <span>OFFLINE-FIRST · NOTHING LEAVES THIS PAGE</span>
+          <span>OFFLINE-FIRST · YOUR PASTE STAYS LOCAL</span>
           <span className="opacity-60">v0.1 · {verdict.findings.length} findings</span>
         </div>
       </header>
