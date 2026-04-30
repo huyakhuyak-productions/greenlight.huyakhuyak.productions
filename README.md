@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# Greenlight
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web-based safety check for shell snippets you'd otherwise paste blindly into a terminal.
 
-Currently, two official plugins are available:
+Paste a command, URL, or config blob into the page. If it's safe, the page goes **green**. If anything is off, the page goes **red** and tells you what.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The whole engine runs in your browser. **Nothing you paste ever leaves the tab** — no requests, no telemetry, no server.
 
-## React Compiler
+## Why
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Half the install instructions on the modern internet are some flavour of `curl … | bash`. The shape of the threat (download arbitrary code from a server you don't control, then execute it without reading it) is well-documented and routinely abused — but the muscle memory of copy-paste is faster than the muscle memory of "wait, should I read this first?" Greenlight's job is to insert a friction-free safety check between *Cmd-C* on the blog and *Cmd-V* in the terminal.
 
-## Expanding the ESLint configuration
+There's a terminal-side tool for the same problem ([tirith](https://github.com/sheeki03/tirith)) — but it requires you to have already installed it, which doesn't help on a fresh machine, in a teammate's session, or for the people who would benefit most. Greenlight is a public web page: zero install, paste-and-check.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## What it detects
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Fifteen categories, prioritised by how often the threat shape shows up in pasted snippets:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Pipe-to-shell** — `curl … | bash`, `wget … | sudo sh`, process substitution, `eval $(curl …)`, save-then-execute, PowerShell `iex`
+- **Homograph & URL trickery** — Cyrillic/Greek lookalikes, mixed-script labels, punycode hostnames, URL shorteners
+- **Base64 decode-execute** — `echo … | base64 -d | sh`, PowerShell `-EncodedCommand`
+- **Terminal injection** — ANSI escapes, bidi overrides, zero-width chars, Unicode tag chars
+- **Insecure transport** — `curl -k`, `--insecure`, `NODE_TLS_REJECT_UNAUTHORIZED=0`, `http://` piped to a shell
+- **Data exfiltration** — `curl -d @/etc/passwd`, env-var POSTs, credential file uploads
+- **Credential detection** — AWS keys, GitHub PATs, private-key headers, high-entropy strings
+- **Command safety** — overwrites of dotfiles, archive extraction with traversal, `rm -rf /`, metadata-endpoint access
+- **Steganography** — invisible whitespace, Mongolian Vowel Separator, Hangul Fillers
+- **Config-file injection** — shell metacharacters in MCP `args`, prompt-injection keywords in rules files
+- **Ecosystem threats** — typosquats, untrusted registries, URL-based package installs
+- **Environment** — `LD_PRELOAD` exports, interpreter hijacking via shebangs, proxy hijacking
+- **Code-file scanning** — dynamic-eval patterns, suspicious dynamic imports
+- **Post-compromise** — Docker privilege-escalation flags, credential sweeps, process-memory tools
+- **Path analysis** — non-ASCII paths, double-encoded `%2e%2e`, traversal patterns
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Running locally
+
+```sh
+bun install
+bun run dev      # http://localhost:5173
+bun run test     # the engine has 277+ unit tests
+bun run build    # produces dist/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The repo uses [Bun](https://bun.sh) as the package manager and runtime. If you don't have it: `curl -fsSL https://bun.sh/install | bash` — and yes, the irony is not lost on us.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Deploying
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+There's a `Dockerfile` in the root that builds the static bundle with Bun and serves it from `nginx:alpine`:
+
+```sh
+docker build --tag greenlight .
+docker run --publish 8080:80 greenlight
 ```
+
+The output is plain static files — point any host that serves a directory (Cloudflare Pages, Netlify, Vercel, S3+CloudFront, plain nginx on a VPS) at `dist/` and you're done.
+
+## Stack
+
+- [Bun](https://bun.sh) for the runtime and package manager
+- [Vite](https://vitejs.dev) + [React 19](https://react.dev) + [TypeScript](https://www.typescriptlang.org) for the SPA
+- [Tailwind CSS v4](https://tailwindcss.com) for styling
+- [GSAP](https://gsap.com) for the verdict animations
+- [Vitest](https://vitest.dev) for the engine's unit tests
+
+## Credits
+
+The detection categories and many of the rule shapes are lifted directly from [tirith](https://github.com/sheeki03/tirith) by [@sheeki03](https://github.com/sheeki03). Greenlight reimplements the rules in TypeScript so they can run in a browser tab, but the threat taxonomy is theirs — go give them a star.
