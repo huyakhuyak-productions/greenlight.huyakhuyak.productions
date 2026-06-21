@@ -187,13 +187,13 @@ export function EngineInternals() {
           engine internals · how greenlight works
         </div>
         <h2 className="font-display italic text-[clamp(3rem,9vw,9rem)] leading-[0.92] mt-6 max-w-[18ch]">
-          three steps,<br />zero network calls.
+          three steps,<br />all in your browser.
         </h2>
         <p
           className="font-mono text-sm sm:text-base leading-relaxed mt-8 max-w-[60ch]"
           style={{ color: 'var(--color-bone-2)' }}
         >
-          Greenlight is a static rules engine that runs entirely in your browser. Your paste stays on the page — no telemetry, no analytics, no server. The only thing that ever leaves the tab is an explicit click on <em>Scan this script</em>, which fetches the URL the snippet already names so we can run the same engine over its body. Scroll to watch the pipeline.
+          Greenlight is a static rules engine that runs entirely in your browser. Your paste stays on the page — it is never transmitted, and there is no server holding your data. The hosted site counts anonymous page views (self-hosted, cookieless, never your input); the open-source build ships with even that turned off. The only thing your input ever triggers is an explicit click on <em>Scan this script</em>, which fetches the URL the snippet already names so we can run the same engine over its body. Scroll to watch the pipeline.
         </p>
       </div>
 
@@ -382,7 +382,7 @@ export function EngineInternals() {
             <div className="h-px" style={{ backgroundColor: 'var(--color-graphite)' }} />
             <div className="flex items-center justify-between">
               <span>network</span>
-              <span style={{ color: 'var(--color-bone)' }}>click only</span>
+              <span style={{ color: 'var(--color-bone)' }}>page-view + click</span>
             </div>
             <div className="h-px" style={{ backgroundColor: 'var(--color-graphite)' }} />
             <div className="flex items-center justify-between">

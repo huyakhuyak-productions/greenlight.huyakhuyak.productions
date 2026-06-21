@@ -1,6 +1,6 @@
 # Greenlight — agent context
 
-A client-side web validator for shell commands, URLs, and config snippets. The detection engine runs entirely in the browser and is allowed exactly zero network calls — that's a load-bearing invariant. The UI layer is allowed one kind of network call: an explicit per-finding *Scan this script* click that fetches a `curl | sh` URL so we can re-run the engine over the script body. That click is the only thing that ever leaves the tab. No telemetry, no analytics, no remote rule updates, no implicit fetches.
+A client-side web validator for shell commands, URLs, and config snippets. The detection engine runs entirely in the browser and is allowed exactly zero network calls — that's a load-bearing invariant. The UI layer is allowed two kinds of network call: (1) an explicit per-finding *Scan this script* click that fetches a `curl | sh` URL so we can re-run the engine over the script body; (2) opt-in, env-gated anonymous page-view analytics (self-hosted Umami) that never sees the user's paste. Neither involves the engine, and the user's input never leaves the tab except via that explicit click. No remote rule updates, no implicit fetches of input.
 
 ## Architecture
 
@@ -52,9 +52,14 @@ If you find a ReDoS in one rule, the others probably have the same pattern. The 
 
 ## Privacy is a feature, not a default
 
-There is intentionally no telemetry, no error reporting, no analytics, no remote rule updates. The engine performs zero network I/O — that boundary is non-negotiable and tested by the absence of `fetch(`, `XMLHttpRequest`, etc. anywhere in `src/engine/` and `src/lib/`.
+There is intentionally no error reporting, no remote rule updates, and no telemetry that ever sees the user's input. The engine performs zero network I/O — that boundary is non-negotiable and tested by the absence of `fetch(`, `XMLHttpRequest`, etc. anywhere in `src/engine/` and `src/lib/`. Analytics code never goes in those two directories; it lives in the UI layer (`src/analytics.ts`).
 
-The UI layer has exactly one allowed network call: the per-finding *Scan this script* click. It fetches a single user-pointed URL (the one already named in their paste), receives the body, and feeds it back into the same offline engine. No proxy, no third-party intermediary, no caching across pastes. If a future change wants to call out to anything else — threat-intel feed, "suggest a rule" form, usage metric, even error reporting — that's a product decision that needs an explicit user-visible toggle, not a silent network call.
+The UI layer has two allowed network calls, and nothing else:
+
+1. **The per-finding *Scan this script* click.** It fetches a single user-pointed URL (the one already named in their paste), receives the body, and feeds it back into the same offline engine. No proxy, no third-party intermediary, no caching across pastes.
+2. **Opt-in, env-gated page-view analytics.** `src/analytics.ts` injects a self-hosted Umami script *only* when both `VITE_UMAMI_SRC` and `VITE_UMAMI_WEBSITE_ID` are set at build time. The open-source build and local dev ship with neither set, so analytics is off and no request is made. The real values live in an untracked `.env.local` (see `.env.example`); they are never committed. Umami counts anonymous page views — it never receives the paste.
+
+If a future change wants to call out to anything else — threat-intel feed, "suggest a rule" form, error reporting, or analytics that captures input — that's a product decision that needs an explicit user-visible toggle, not a silent network call.
 
 ## Out of scope (documented, don't build)
 
